@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LNNY Employee Timesheet</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f4f2ee;min-height:100vh;padding:1.5rem 0.75rem 3rem}
+.wrap{max-width:680px;margin:0 auto;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,0.10)}
+.brand-bar{background:#1a1a1a;color:#c9a84c;font-size:14px;font-weight:700;letter-spacing:0.16em;text-align:center;padding:14px}
+.brand-sub{background:#2d2d2d;color:#888070;font-size:9px;letter-spacing:0.22em;text-align:center;padding:5px}
+.meta-grid{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #e8e4dc}
+.meta-cell{padding:10px 14px}
+.meta-cell:first-child{border-right:1px solid #e8e4dc}
+.meta-label{font-size:9px;color:#aaa;margin-bottom:3px;text-transform:uppercase;letter-spacing:0.08em}
+.meta-val{font-size:13px;font-weight:700;color:#1a1a1a}
+.meta-input{width:100%;border:none;background:transparent;font-size:13px;font-weight:700;color:#1a1a1a;outline:none;padding:0}
+.meta-input::placeholder{color:#ccc;font-weight:400}
+.save-bar{background:#fffbf0;border-bottom:1px solid #d4b84a;padding:8px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.save-status{font-size:11px;color:#8a7530;display:flex;align-items:center;gap:5px}
+.dot{width:7px;height:7px;border-radius:50%;background:#4a9a4a;flex-shrink:0;transition:background 0.3s}
+.dot.saving{background:#f0a030;animation:pulse 0.7s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.25}}
+.holiday-toggle{display:flex;align-items:center;gap:5px;font-size:11px;color:#7a6830;cursor:pointer;user-select:none}
+.holiday-toggle input{accent-color:#c9a84c;cursor:pointer}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#1a1a1a;color:#c9a84c;font-size:9px;font-weight:700;letter-spacing:0.1em;padding:8px 6px;text-align:center;white-space:nowrap}
+th.tl{text-align:left;padding-left:14px}
+td{padding:6px 5px;border-bottom:1px solid #f0ece4;vertical-align:middle}
+td.tl{padding-left:14px}
+tr.we{background:#faf8f4}
+tr.tdy td{background:#fffdf5}
+tr.tdy td.tl{border-left:3px solid #c9a84c}
+.dname{font-size:13px;font-weight:600;color:#333;white-space:nowrap}
+.ddate{font-size:11px;color:#888;white-space:nowrap;text-align:center}
+.badge{display:inline-block;font-size:9px;padding:2px 8px;border-radius:9px;font-weight:700;white-space:nowrap}
+.bwk{background:#eaf3de;color:#27500a}
+.bsa{background:#e6f1fb;color:#0c447c}
+.bsu{background:#fbeaf0;color:#72243e}
+.bph{background:#faeeda;color:#633806}
+.rc{font-size:11px;color:#aaa;text-align:center}
+input.hi,input.si,input.ui{border:1px solid #e0dcd4;border-radius:5px;padding:5px 4px;font-size:13px;background:#fafaf8;color:#1a1a1a;transition:border-color 0.15s}
+input.hi{width:60px;text-align:center}
+input.si{width:80px;text-align:right}
+input.ui{width:52px;text-align:center}
+input.hi:focus,input.si:focus,input.ui:focus{outline:none;border-color:#c9a84c;background:#fffbf0}
+.gc{font-size:12px;font-weight:700;color:#1a1a1a;text-align:right;padding-right:10px;white-space:nowrap}
+.sum-wrap{border-top:2px solid #1a1a1a}
+.sum-sec{padding:11px 15px}
+.sum-ttl{font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:#bbb;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid #f0ece4}
+.sg{display:grid;grid-template-columns:1fr auto;gap:5px 14px;font-size:12px}
+.sl{color:#777}
+.sv{font-weight:700;text-align:right;color:#1a1a1a;white-space:nowrap}
+.tot-bar{background:#1a1a1a;display:grid;grid-template-columns:1fr auto;align-items:center;padding:14px 16px}
+.tot-lbl{font-size:10px;letter-spacing:0.13em;text-transform:uppercase;color:#888070}
+.tot-val{font-size:22px;font-weight:800;color:#c9a84c}
+.sph-bar{background:#fffbf0;border-top:1px solid #d4b84a;display:grid;grid-template-columns:repeat(3,1fr)}
+.sph-cell{padding:11px 10px;text-align:center;border-right:1px solid #e8d89a}
+.sph-cell:last-child{border-right:none}
+.sph-lbl{font-size:9px;color:#8a7530;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:4px}
+.sph-val{font-size:16px;font-weight:800;color:#3d3010}
+.actions{padding:13px 15px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:#f7f5f0;border-top:1px solid #e8e4dc}
+.btn{padding:9px 20px;border-radius:7px;font-size:13px;cursor:pointer;font-weight:700;border:none;transition:background 0.15s}
+.btn-p{background:#1a1a1a;color:#c9a84c}
+.btn-p:hover{background:#333}
+.btn-d{background:transparent;color:#c0392b;border:1px solid #e8b8b8;font-size:12px;padding:7px 14px}
+.btn-d:hover{background:#fff5f5}
+.note{font-size:11px;color:#bbb;padding:8px 15px 10px;background:#f7f5f0;border-top:1px solid #eee;text-align:center;line-height:1.7}
+@media(max-width:520px){
+  .hm{display:none}
+  .sph-bar{grid-template-columns:1fr 1fr}
+  .sph-cell:nth-child(3){border-top:1px solid #e8d89a;grid-column:span 2}
+  body{padding:0.5rem 0.25rem 2rem}
+  .wrap{border-radius:6px}
+}
+@media print{
+  body{background:#fff;padding:0}
+  .wrap{box-shadow:none;border-radius:0}
+  .actions,.save-bar{display:none!important}
+  input.hi,input.si,input.ui{border:none!important;background:transparent!important;padding:0}
+  th,.brand-bar,.brand-sub,.tot-bar,.sph-bar,.badge,tr.we td,tr.tdy td{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  @page{margin:1cm;size:A4}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand-bar">LINDSAY NICHOLAS NEW YORK</div>
+  <div class="brand-sub">EMPLOYEE TIMESHEET</div>
+
+  <div class="meta-grid">
+    <div class="meta-cell">
+      <div class="meta-label">Employee name</div>
+      <input class="meta-input" id="emp-name" placeholder="Your full name" oninput="schedSave()"/>
+    </div>
+    <div class="meta-cell">
+      <div class="meta-label">Fortnight period</div>
+      <div class="meta-val" id="period-display">—</div>
+    </div>
+  </div>
+
+  <div class="save-bar">
+    <div class="save-status">
+      <span class="dot" id="dot"></span>
+      <span id="smsg">Loading…</span>
+    </div>
+    <label class="holiday-toggle">
+      <input type="checkbox" id="hol-chk" onchange="schedSave();renderTable()">
+      Mark a public holiday
+    </label>
+  </div>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr>
+        <th class="tl" style="width:88px">Day</th>
+        <th style="width:70px">Date</th>
+        <th style="width:108px">Type</th>
+        <th class="hm" style="width:68px">Rate/hr</th>
+        <th style="width:64px">Hours</th>
+        <th style="width:86px">Sales ($)</th>
+        <th class="hm" style="width:56px">Units</th>
+        <th style="width:74px;text-align:right;padding-right:10px">Pay</th>
+      </tr></thead>
+      <tbody id="ts-body"></tbody>
+    </table>
+  </div>
+
+  <div class="sum-wrap">
+    <div class="sum-sec">
+      <div class="sum-ttl">Hours breakdown</div>
+      <div class="sg" id="hbk"><span class="sl" style="color:#ccc">Enter hours above to see breakdown</span><span></span></div>
+    </div>
+    <div style="height:1px;background:#e8e4dc"></div>
+    <div class="sum-sec">
+      <div class="sum-ttl">Gross pay breakdown</div>
+      <div class="sg" id="pbk"><span style="color:#ccc">—</span><span></span></div>
+    </div>
+    <div class="tot-bar">
+      <div class="tot-lbl">Total gross pay</div>
+      <div class="tot-val" id="tot-gross">$0.00</div>
+    </div>
+    <div class="sph-bar">
+      <div class="sph-cell"><div class="sph-lbl">Total hours</div><div class="sph-val" id="s-hrs">0</div></div>
+      <div class="sph-cell"><div class="sph-lbl">Sales / hr (ex. GST)</div><div class="sph-val" id="s-sph">—</div></div>
+      <div class="sph-cell"><div class="sph-lbl">Units / hr</div><div class="sph-val" id="s-uph">—</div></div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-p" onclick="window.print()">Print / save as PDF &rarr;</button>
+    <button class="btn btn-d" onclick="confirmClear()">Clear &amp; start new fortnight</button>
+  </div>
+  <div class="note">
+    Your entries save automatically every time you type — just come back to this page and they will still be here.<br>
+    At the end of each fortnight, tap <strong>Print / save as PDF</strong> and send it to Lindsay.
+  </div>
+</div>
+
+<script>
+const RATES={weekday:34.48,saturday:41.37,sunday:48.27,holiday:86.20};
+const DAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const STORE_KEY='lnny_ts_v3';
+let rows=[],holSet=new Set(),saveTimer=null;
+
+function getFortnight(){
+  const n=new Date(),s=new Date(n);
+  s.setDate(n.getDate()-n.getDay());
+  s.setHours(0,0,0,0);
+  return s;
+}
+
+function buildRows(start){
+  const r=[];
+  for(let i=0;i<14;i++){
+    const d=new Date(start);
+    d.setDate(start.getDate()+i);
+    r.push({date:d.toISOString().slice(0,10),hours:'',sales:'',units:''});
+  }
+  return r;
+}
+
+function setPeriod(start){
+  const e=new Date(start);
+  e.setDate(start.getDate()+13);
+  const f=d=>d.toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'});
+  document.getElementById('period-display').textContent=f(start)+' \u2013 '+f(e);
+}
+
+function getType(iso,idx){
+  if(holSet.has(idx)) return 'holiday';
+  const dw=new Date(iso+'T00:00:00').getDay();
+  return dw===0?'sunday':dw===6?'saturday':'weekday';
+}
+
+function bClass(t){return{weekday:'bwk',saturday:'bsa',sunday:'bsu',holiday:'bph'}[t];}
+function bLabel(t){return{weekday:'Weekday',saturday:'Saturday',sunday:'Sunday',holiday:'Public holiday'}[t];}
+
+function renderTable(){
+  if(!rows.length) return;
+  const showH=document.getElementById('hol-chk').checked;
+  const today=new Date().toISOString().slice(0,10);
+  document.getElementById('ts-body').innerHTML=rows.map((row,i)=>{
+    const t=getType(row.date,i),rate=RATES[t],hrs=parseFloat(row.hours)||0,pay=hrs*rate;
+    const dw=new Date(row.date+'T00:00:00').getDay();
+    const isWE=dw===0||dw===6||t==='holiday',isToday=row.date===today;
+    const ds=new Date(row.date+'T00:00:00').toLocaleDateString('en-AU',{day:'2-digit',month:'short'});
+    const hc=showH?`<input type="checkbox" style="cursor:pointer;margin-left:5px;accent-color:#c9a84c" ${holSet.has(i)?'checked':''} onchange="togHol(${i},this.checked)">`:'';
+    return `<tr class="${isWE?'we':''} ${isToday?'tdy':''}" id="r${i}">
+      <td class="tl dname">${DAYS[dw]}</td>
+      <td class="ddate">${ds}</td>
+      <td><span class="badge ${bClass(t)}">${bLabel(t)}</span>${hc}</td>
+      <td class="rc hm">$${rate.toFixed(2)}</td>
+      <td style="text-align:center"><input class="hi" type="number" min="0" max="24" step="0.25" placeholder="0" value="${row.hours}" oninput="sv(${i},'hours',this.value)"></td>
+      <td style="text-align:right"><input class="si" type="number" min="0" step="0.01" placeholder="0.00" value="${row.sales}" oninput="sv(${i},'sales',this.value)"></td>
+      <td style="text-align:center" class="hm"><input class="ui" type="number" min="0" step="1" placeholder="0" value="${row.units}" oninput="sv(${i},'units',this.value)"></td>
+      <td class="gc" id="p${i}">${pay>0?'$'+pay.toFixed(2):'—'}</td>
+    </tr>`;
+  }).join('');
+  recalc();
+}
+
+function togHol(i,on){
+  on?holSet.add(i):holSet.delete(i);
+  schedSave();renderTable();
+}
+
+function sv(i,key,val){
+  rows[i][key]=val;
+  if(key==='hours'){
+    const p=(parseFloat(val)||0)*RATES[getType(rows[i].date,i)];
+    const el=document.getElementById('p'+i);
+    if(el) el.textContent=p>0?'$'+p.toFixed(2):'—';
+  }
+  recalc();schedSave();
+}
+
+function recalc(){
+  const T={weekday:{h:0,p:0},saturday:{h:0,p:0},sunday:{h:0,p:0},holiday:{h:0,p:0}};
+  let tS=0,tU=0;
+  rows.forEach((row,i)=>{
+    const t=getType(row.date,i),h=parseFloat(row.hours)||0;
+    T[t].h+=h;T[t].p+=h*RATES[t];
+    tS+=parseFloat(row.sales)||0;
+    tU+=parseFloat(row.units)||0;
+  });
+  const TL={weekday:'Weekday',saturday:'Saturday',sunday:'Sunday',holiday:'Public holiday'};
+  let hH='',pH='',tG=0,tH=0;
+  Object.entries(T).forEach(([t,{h,p}])=>{
+    if(h>0){
+      hH+=`<span class="sl">${TL[t]}</span><span class="sv">${h.toFixed(2)} hrs</span>`;
+      pH+=`<span class="sl">${TL[t]} <span style="color:#ccc;font-weight:400">${h.toFixed(2)} hrs \u00d7 $${RATES[t]}</span></span><span class="sv">$${p.toFixed(2)}</span>`;
+      tG+=p;tH+=h;
+    }
+  });
+  if(!hH){
+    hH='<span class="sl" style="color:#ccc">Enter hours above to see breakdown</span><span></span>';
+    pH='<span style="color:#ccc">—</span><span></span>';
+  } else {
+    hH+=`<span class="sl" style="font-weight:700;border-top:1px solid #e8e4dc;padding-top:6px;margin-top:2px">Total</span><span class="sv" style="border-top:1px solid #e8e4dc;padding-top:6px;margin-top:2px">${tH.toFixed(2)} hrs</span>`;
+  }
+  document.getElementById('hbk').innerHTML=hH;
+  document.getElementById('pbk').innerHTML=pH;
+  document.getElementById('tot-gross').textContent='$'+tG.toFixed(2);
+  document.getElementById('s-hrs').textContent=tH.toFixed(2);
+  document.getElementById('s-sph').textContent=tH>0?'$'+(tS/1.1/tH).toFixed(2):'—';
+  document.getElementById('s-uph').textContent=tH>0?(tU/tH).toFixed(2):'—';
+}
+
+function schedSave(){
+  const dot=document.getElementById('dot'),msg=document.getElementById('smsg');
+  dot.className='dot saving';msg.textContent='Saving…';
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(()=>{
+    try{
+      const payload={
+        name:document.getElementById('emp-name').value,
+        holChk:document.getElementById('hol-chk').checked,
+        holRows:[...holSet],
+        rows:rows
+      };
+      localStorage.setItem(STORE_KEY,JSON.stringify(payload));
+      dot.className='dot';
+      msg.textContent='Saved \u2014 your entries will be here when you return';
+    } catch(e){
+      dot.className='dot';
+      msg.textContent='Could not save (try a different browser)';
+    }
+  },600);
+}
+
+function loadSaved(){
+  try{
+    const raw=localStorage.getItem(STORE_KEY);
+    return raw?JSON.parse(raw):null;
+  }catch(e){return null;}
+}
+
+function confirmClear(){
+  if(!confirm('This will clear all entries and start a fresh fortnight.\n\nMake sure you have already sent your PDF to Lindsay before doing this!')) return;
+  localStorage.removeItem(STORE_KEY);
+  holSet.clear();
+  document.getElementById('hol-chk').checked=false;
+  document.getElementById('emp-name').value='';
+  const s=getFortnight();
+  rows=buildRows(s);
+  setPeriod(s);
+  renderTable();
+  document.getElementById('dot').className='dot';
+  document.getElementById('smsg').textContent='Ready for a new fortnight';
+}
+
+window.addEventListener('DOMContentLoaded',()=>{
+  const saved=loadSaved();
+  if(saved&&saved.rows&&saved.rows.length===14){
+    rows=saved.rows;
+    holSet=new Set((saved.holRows||[]).map(Number));
+    document.getElementById('emp-name').value=saved.name||'';
+    document.getElementById('hol-chk').checked=!!saved.holChk;
+    setPeriod(new Date(saved.rows[0].date+'T00:00:00'));
+    document.getElementById('smsg').textContent='Welcome back \u2014 your entries are saved';
+  } else {
+    rows=buildRows(getFortnight());
+    setPeriod(getFortnight());
+    document.getElementById('smsg').textContent='Enter your details to get started';
+  }
+  document.getElementById('dot').className='dot';
+  renderTable();
+});
+</script>
+</body>
+</html>
